@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Underwriter - Risk Dashboard</title>
+    <link rel="stylesheet" href="index.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="theme-dark">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <div class="logo-area">
+                <i data-lucide="shield" class="icon-brand neon-cyan"></i>
+                <span class="brand-name">Underwrite<span class="gradient-text">AI</span></span>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+                <a href="#" class="nav-item"><i data-lucide="folder-open"></i> Cases</a>
+                <a href="#" class="nav-item"><i data-lucide="settings"></i> Settings</a>
+            </nav>
+
+            <div class="user-profile">
+                <i data-lucide="circle-user" class="avatar"></i>
+                <div class="user-info">
+                    <span class="username">Lead Underwriter</span>
+                    <span class="user-role">Risk Engineer</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-nav glass">
+                <div class="page-title">
+                    <h1>Risk Assessment Workspace</h1>
+                    <p class="subtitle">Select a client profile to analyze blended risk vectors.</p>
+                </div>
+                
+                <div class="workspace-actions">
+                    <div class="select-wrapper glass-input">
+                        <i data-lucide="users" class="input-icon"></i>
+                        <select id="client-select">
+                            <option value="">Select Client Profile...</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+                    <button id="generate-btn" class="btn btn-primary btn-glow" disabled>
+                        <i data-lucide="sparkles"></i> Generate Risk Summary
+                    </button>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Data Source Analytics -->
+                <section class="grid-card glass">
+                    <div class="card-header">
+                        <h2><i data-lucide="database" class="neon-cyan"></i> Structured Data (BigQuery)</h2>
+                        <span class="badge badge-cyan">Aggregated claims</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="data-summary" id="bq-summary">
+                            <div class="placeholder-text">Select a client to view BigQuery data.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid-card glass">
+                    <div class="card-header">
+                        <h2><i data-lucide="file-text" class="neon-magenta"></i> Unstructured Data (Vertex AI Search)</h2>
+                        <span class="badge badge-magenta">Loss runs reports</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="data-summary" id="loss-summary">
+                            <div class="placeholder-text">Select a client to view loss run summaries.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- AI Synthesis Output -->
+                <section class="grid-card glass full-width" id="synthesis-section">
+                    <div class="card-header">
+                        <h2><i data-lucide="brain" class="neon-purple"></i> AI-Assisted Synthesis & Recommendations</h2>
+                        <span class="badge badge-purple" id="synthesis-badge">Awaiting data...</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="synthesis-container" id="synthesis-output">
+                            <div class="empty-state">
+                                <i data-lucide="sparkles" class="empty-icon pulse"></i>
+                                <h3>Ready for Synthesis</h3>
+                                <p>Click **Generate Risk Summary** to synthesize structured BQ data and unstructured Loss Runs using Gemini context windows.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script to run icons -->
+    <script>
+      lucide.createIcons();
+    </script>
+    <script src="index.js"></script>
+</body>
+</html>
