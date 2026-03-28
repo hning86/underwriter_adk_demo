@@ -4,26 +4,40 @@ from dotenv import load_dotenv
 # Load environment variables (pulls GOOGLE_API_KEY from .env)
 load_dotenv()
 
+from google.cloud import bigquery
+bq_client = bigquery.Client(
+    project=os.environ.get('GOOGLE_CLOUD_PROJECT', 'ninghai-ccai'),
+    location=os.environ.get('GOOGLE_CLOUD_LOCATION', 'us-central1')
+)
+
 from google.adk.agents import Agent
 from google.adk.apps import App
 from google.adk.models.google_llm import Gemini
-from google.genai import types
+from google.genai import types, Client
+
+# Custom Gemini subclass to enable Vertex AI
+class VertexGemini(Gemini):
+    _cached_client: Client | None = None
+
+    @property
+    def api_client(self) -> Client:
+        if self._cached_client is None:
+            self._cached_client = Client(
+                vertexai=True,
+                project=os.environ.get('GOOGLE_CLOUD_PROJECT', 'ninghai-ccai'),
+                location=os.environ.get('GOOGLE_CLOUD_LOCATION', 'us-central1'),
+                http_options=types.HttpOptions(
+                    headers=self._tracking_headers(),
+                    retry_options=self.retry_options,
+                    base_url=self.base_url,
+                )
+            )
+        return self._cached_client
 
 # Mock Database
 MOCK_CLIENTS = {
     "acme": {
         "id": "acme",
-        "name": "Acme Logistics",
-        "industry": "Transportation",
-        "bq_data": {
-            "premium_3y": 450000,
-            "loss_ratio": 0.82,
-            "claims_frequency": 14,
-            "large_claims": [
-                "Cargo damage claim: $75,000 (Winter storm ice event)",
-                "Rollover accident: $50,000"
-            ]
-        },
         "loss_runs": {
             "narrative": "Acme Logistics operates a fleet of 50 delivery vehicles. Recent safety checks suggest maintenance logs are incomplete. Drivers reported overtime peaks during holiday seasons.",
             "claims_history": [
@@ -36,16 +50,6 @@ MOCK_CLIENTS = {
     },
     "zenith": {
         "id": "zenith",
-        "name": "Zenith Manufacturing",
-        "industry": "Heavy Machinery",
-        "bq_data": {
-            "premium_3y": 1200000,
-            "loss_ratio": 0.45,
-            "claims_frequency": 4,
-            "large_claims": [
-                "Machine malfunction injury: $120,000 (Settled)"
-            ]
-        },
         "loss_runs": {
             "narrative": "Zenith has automated production lines. Safety metrics are above average, but shop floor ergonomics are a recurring complaint in worker surveys.",
             "claims_history": [
@@ -55,19 +59,8 @@ MOCK_CLIENTS = {
             ]
         }
     },
-    "retail": {
-        "id": "retail",
-        "name": "Stellar Retail",
-        "industry": "E-Commerce",
-        "bq_data": {
-            "premium_3y": 800000,
-            "loss_ratio": 0.68,
-            "claims_frequency": 22,
-            "large_claims": [
-                "Warehouse inventory theft: $45,000",
-                "Delivery van bumper damage: multiple small claims"
-            ]
-        },
+    "stella": {
+        "id": "stella",
         "loss_runs": {
             "narrative": "Stellar Retail has rapid expansion. High turnover of warehouse staff. Stress reports during peak delivery windows.",
             "claims_history": [
@@ -88,22 +81,64 @@ def get_client_telemetry(client_id: str) -> dict:
     """Retrieves combined structured (BigQuery) and unstructured metrics for a client.
     
     Args:
-        client_id: Unique identifier for the client (e.g. 'acme', 'zenith', 'retail').
+        client_id: Unique identifier for the client (e.g. 'acme', 'zenith', 'stella').
     """
     if client_id not in MOCK_CLIENTS:
         return {"error": f"Client ID '{client_id}' not found."}
-    return MOCK_CLIENTS[client_id]
+    
+    project_id = os.environ.get('GOOGLE_CLOUD_PROJECT', 'ninghai-ccai')
+    query = f"""
+        SELECT *
+        FROM `{project_id}.underwriter_demo.client_profiles`
+        WHERE client_id = @client_id
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("client_id", "STRING", client_id)
+        ]
+    )
+    
+    try:
+        results = bq_client.query(query, job_config=job_config).result()
+        for row in results:
+            return {
+                "id": client_id,
+                "name": row.name,
+                "industry": row.industry,
+                "bq_data": {
+                    "company_size": row.company_size,
+                    "annual_revenue": row.annual_revenue,
+                    "headquarters": row.headquarters,
+                    "years_in_business": row.years_in_business,
+                    "primary_operations": row.primary_operations,
+                    "number_of_facilities": row.number_of_facilities,
+                    "safety_rating_class": row.safety_rating_class
+                },
+                "loss_runs": MOCK_CLIENTS[client_id]["loss_runs"]
+            }
+        return {"error": "Client profile found in memory but missing in BigQuery."}
+    except Exception as e:
+        return {"error": f"Failed to retrieve data from BigQuery: {str(e)}"}
 
 def list_client_profiles() -> list[dict]:
     """Lists available client profiles (ID and Name)."""
-    return [{"id": v["id"], "name": v["name"]} for v in MOCK_CLIENTS.values()]
+    project_id = os.environ.get('GOOGLE_CLOUD_PROJECT', 'ninghai-ccai')
+    query = f"""
+        SELECT client_id as id, name 
+        FROM `{project_id}.underwriter_demo.client_profiles`
+    """
+    try:
+        results = bq_client.query(query).result()
+        return [{"id": row.id, "name": row.name} for row in results]
+    except Exception as e:
+        return [{"error": f"Failed to list profiles: {str(e)}"}]
 
 # ------------------------------------------------------------------------------
 # Agent & App Definition
 # ------------------------------------------------------------------------------
 
-# Using Gemini model instance
-model = Gemini(model='gemini-2.5-flash')
+# Using Vertex Gemini model instance
+model = VertexGemini(model='gemini-2.5-flash')
 
 root_agent = Agent(
     name="underwriter_agent",

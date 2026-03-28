@@ -33,12 +33,24 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // Fetch client details (BQ and Loss runs preview)
         fetch(`/api/clients/${clientId}`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
             .then(data => {
+                if (data.error || data.detail) {
+                    throw new Error(data.error || data.detail);
+                }
                 currentClient = data;
                 renderPreviews(data);
             })
-            .catch(err => console.error("Error fetching client details:", err));
+            .catch(err => {
+                console.error("Error fetching client details:", err);
+                resetUI();
+                bqSummary.innerHTML = `<div class="placeholder-text" style="color:#ff6b6b">Error: Failed to load profile data.<br/>Please refresh the page.</div>`;
+            });
     });
 
     // Handle Generate Summary
@@ -82,41 +94,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderPreviews(data) {
+        const bqEntries = Object.entries(data.bq_data);
+        
         // Render BQ Mock data
         bqSummary.innerHTML = `
             <div class="metrics-grid">
+                ${bqEntries.map(([key, value]) => `
                 <div class="metric-card">
-                    <span class="metric-label">Premium History (3Y)</span>
-                    <span class="metric-value">$${data.bq_data.premium_3y.toLocaleString()}</span>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-label">Loss Ratio (YTD)</span>
-                    <span class="metric-value ${data.bq_data.loss_ratio > 0.70 ? 'danger-text' : 'success-text'}">${(data.bq_data.loss_ratio * 100).toFixed(1)}%</span>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-label">Claims Frequency</span>
-                    <span class="metric-value">${data.bq_data.claims_frequency} / year</span>
-                </div>
-            </div>
-            <div class="data-block">
-                <h4>Recent Large Claims</h4>
-                <ul>
-                    ${data.bq_data.large_claims.map(claim => `<li>${claim}</li>`).join('')}
-                </ul>
+                    <span class="metric-label">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                    <span class="metric-value">${typeof value === 'number' && key.includes('revenue') ? '$' + value.toLocaleString() : value}</span>
+                </div>`).join('')}
             </div>
         `;
 
-        // Render Loss Runs preview
+        // Render Loss Runs preview as PDF iframe with cache buster to force reload
         lossSummary.innerHTML = `
-            <div class="narrative-container">
-                <h4>Narrative Excerpts (Vertex Retreived Context)</h4>
-                <p>${data.loss_runs.narrative}</p>
-                <div class="bullet-list">
-                    <h5>Key Incidents Identified:</h5>
-                    <ul>
-                        ${data.loss_runs.key_incidents.map(inc => `<li>${inc}</li>`).join('')}
-                    </ul>
-                </div>
+            <div class="pdf-container" style="height: 100%; min-height: 500px; width: 100%; border-radius: 8px; overflow: hidden;">
+                <iframe src="/reports/${data.id}_loss_runs.pdf#view=FitH&t=${Date.now()}" width="100%" height="100%" style="border: none;"></iframe>
             </div>
         `;
     }

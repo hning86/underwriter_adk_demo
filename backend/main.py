@@ -7,7 +7,7 @@ from google.genai import types
 # ADK Imports
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from backend.underwriter_agent.agent import app as agent_app, MOCK_CLIENTS
+from backend.underwriter_agent.agent import app as agent_app, MOCK_CLIENTS, list_client_profiles, get_client_telemetry
 
 app = FastAPI()
 
@@ -20,13 +20,14 @@ class GenerateRequest(BaseModel):
 
 @app.get("/api/clients")
 def get_clients():
-    return [{"id": v["id"], "name": v["name"]} for v in MOCK_CLIENTS.values()]
+    return list_client_profiles()
 
 @app.get("/api/clients/{client_id}")
 def get_client(client_id: str):
-    if client_id not in MOCK_CLIENTS:
-        raise HTTPException(status_code=404, detail="Client not found")
-    return MOCK_CLIENTS[client_id]
+    data = get_client_telemetry(client_id)
+    if "error" in data:
+        raise HTTPException(status_code=404, detail=data["error"])
+    return data
 
 @app.post("/api/generate-summary")
 async def generate_summary(request: GenerateRequest):
@@ -115,4 +116,5 @@ def get_fallback_summary(client):
 """
 
 # Mount Static Files for UI (placed at bottom to avoid shadowing API routes)
+app.mount("/reports", StaticFiles(directory="reports"), name="reports")
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
