@@ -16,16 +16,18 @@
 
     --brand-blue: #0079b6;
     --brand-dark-blue: #003651;
+    --brand-navy: #082A4D; /* Safety Dark Navy */
+    --brand-orange: #F26F21; /* Safety Accent Orange */
     --brand-green: #268745;
     --brand-gold: #eaba0a;
 
-    --neon-cyan: var(--brand-blue);
-    --neon-magenta: var(--brand-dark-blue);
-    --neon-purple: var(--brand-blue);
+    --neon-cyan: var(--brand-navy);
+    --neon-magenta: var(--brand-orange);
+    --neon-purple: var(--brand-navy);
     --neon-green: var(--brand-green);
 
-    --accent-primary: var(--brand-blue);
-    --accent-secondary: var(--brand-green);
+    --accent-primary: var(--brand-navy);
+    --accent-secondary: var(--brand-orange);
 
     /* Typography */
     --font-heading: 'Outfit', sans-serif;
@@ -73,6 +75,8 @@ body {
     padding: 1.5rem;
     border-right: 1px solid var(--border-glass);
     z-index: 10;
+    background-color: var(--brand-navy);
+    color: #ffffff;
 }
 
 .logo-area {
@@ -80,7 +84,7 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding-bottom: 2rem;
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .brand-name {
@@ -88,12 +92,11 @@ body {
     font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: -0.5px;
+    color: #ffffff;
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--brand-orange);
 }
 
 .nav-menu {
@@ -110,20 +113,20 @@ body {
     gap: 1rem;
     padding: 0.75rem 1rem;
     border-radius: 12px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     font-weight: 500;
     transition: var(--transition-smooth);
 }
 
 .nav-item:hover, .nav-item.active {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-    box-shadow: inset 0 0 0 1px var(--border-glass);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    box-shadow: none;
 }
 
 .nav-item.active {
-    border-left: 3px solid var(--neon-cyan);
+    border-left: 3px solid var(--brand-orange);
 }
 
 .user-profile {
@@ -131,7 +134,7 @@ body {
     align-items: center;
     gap: 1rem;
     padding-top: 1.5rem;
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Main Content */
@@ -225,9 +228,9 @@ body {
 }
 
 .btn-glow:not(:disabled):hover {
-    background: var(--brand-dark-blue);
+    background: var(--brand-orange);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 121, 182, 0.3);
+    box-shadow: 0 4px 12px rgba(242, 111, 33, 0.3);
 }
 
 /* Dashboard Grid */
@@ -261,6 +264,12 @@ body {
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    border-top: 3px solid var(--brand-navy);
+    transition: var(--transition-smooth);
+}
+
+.grid-card:hover {
+    border-top-color: var(--brand-orange);
 }
 
 .card-header {
@@ -410,6 +419,85 @@ body {
 .rag-snippet-block b {
     color: var(--brand-gold);
     font-weight: 800;
+}
+
+/* Modal Styles */
+.modal {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 54, 81, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 5vh;
+    padding-bottom: 5vh;
+    transition: opacity 0.2s ease-out;
+    overflow-y: auto;
+}
+.modal.active {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+.modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 1400px;
+    min-height: 70vh;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 54, 81, 0.2);
+    overflow: hidden;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border-glass);
+    background: var(--bg-primary);
+}
+.modal-header h2 {
+    color: var(--brand-dark-blue);
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+}
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    background: #ffffff;
+}
+.btn-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: var(--transition-smooth);
+}
+.btn-close:hover {
+    color: var(--brand-dark-blue);
+    transform: scale(1.1);
+}
+
+/* Ensure Mermaid diagrams scale properly inside modal */
+.mermaid {
+    width: 100%;
+    text-align: center;
+    padding: 1rem 0;
+}
+.mermaid svg {
+    max-width: 100%;
 }
 
 /* Responsive adjustments */

@@ -11,6 +11,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Mermaid JS (Modern v11 ESM) -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        window.mermaid = mermaid;
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            themeVariables: {
+                fontSize: '16px',
+                fontFamily: 'Inter, sans-serif'
+            }
+        });
+    </script>
 </head>
 <body class="theme-dark">
     <div class="app-container">
@@ -27,6 +41,10 @@
                 </div>
                 
                 <div class="workspace-actions">
+                    <button class="btn" id="btn-architecture"
+                        style="border: 1px solid var(--border-glass); background: transparent; color: var(--text-secondary);">
+                        <i data-lucide="network"></i> Architecture
+                    </button>
                     <div class="select-wrapper glass-input">
                         <i data-lucide="users" class="input-icon"></i>
                         <select id="client-select">
@@ -44,7 +62,7 @@
                 <!-- Data Source Analytics -->
                 <section class="grid-card glass" id="bq-section">
                     <div class="card-header">
-                        <h2><i data-lucide="database" class="neon-cyan"></i> Structured Data (BigQuery)</h2>
+                        <h2><i data-lucide="database" class="neon-cyan"></i> Client Profile (structured data from BQ)</h2>
                         <div class="tab-controls">
                             <button id="bq-tab-btn-data" class="tab-btn active">Client Profile</button>
                             <button id="bq-tab-btn-sql" class="tab-btn">SQL Query</button>
@@ -68,7 +86,7 @@
 
                 <section class="grid-card glass" id="unstructured-section">
                     <div class="card-header">
-                        <h2><i data-lucide="file-text" class="neon-magenta"></i> Unstructured Data (Vertex AI Search)</h2>
+                        <h2><i data-lucide="file-text" class="neon-magenta"></i> Loss run report (unstructured data from Vertex AI Search)</h2>
                         <div class="tab-controls">
                             <button id="tab-btn-pdf" class="tab-btn active">PDF Views</button>
                             <button id="tab-btn-rag" class="tab-btn">RAG Engine</button>
@@ -110,7 +128,52 @@
         </main>
     </div>
 
-    <!-- Script to run icons -->
+    <!-- Architecture Modal -->
+    <div id="arch-modal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2>System Architecture & Orchestration</h2>
+                <button id="close-arch-modal" class="btn-close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <pre class="mermaid">
+                    flowchart TB
+                        UI["💻 Web Dashboard<br/>(HTML/JS/CSS)"]
+                        
+                        subgraph "FastAPI Server"
+                            API["⚡ API Endpoints"]
+                            Runner["🚦 ADK Runner"]
+                        end
+                        
+                        subgraph "Google ADK Orchestration"
+                            Agent["🤖 Underwriter Agent"]
+                            Tools["🛠️ Tools (Profile Fetcher)"]
+                            Gemini["🧠 Gemini 2.5 Flash"]
+                        end
+                        
+                        subgraph "Data Storage"
+                            BQ[("📊 Structured Data<br/>(Google BigQuery)")]
+                            VS[("📄 RAG Document Index<br/>(Vertex AI Search)")]
+                        end
+                    
+                        UI -->|1. Select Client and Generate| API
+                        API -->|2. Invokes via Session| Runner
+                        Runner -->|3. Asynchronous Prompt| Agent
+                        Agent -->|4. Reason about goal| Gemini
+                        Agent -->|5. Request client profile| Tools
+                        Tools -.-> BQ
+                        Tools -.-> VS
+                        Tools -->|6. Return JSON context| Agent
+                        Agent -->|7. Feed context for synthesis| Gemini
+                        Gemini -->|8. Risk Assessment Markdown| Agent
+                        Agent -->|9. Stream output| Runner
+                        Runner -->|10. HTTP JSON Response| API
+                        API -->|11. Render Dashboard| UI
+                                    </pre>
+            </div>
+        </div>
+    </div>
+
     <script>
       lucide.createIcons();
     </script>

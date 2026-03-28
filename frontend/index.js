@@ -281,4 +281,34 @@ document.addEventListener("DOMContentLoaded", () => {
         switchTab('rag');
     }
 
+    // --- Modal Logic ---
+    const archModal = document.getElementById('arch-modal');
+    const btnArchitecture = document.getElementById('btn-architecture');
+    const closeArchModal = document.getElementById('close-arch-modal');
+
+    if (btnArchitecture && closeArchModal && archModal) {
+        btnArchitecture.addEventListener('click', () => {
+            archModal.classList.add('active');
+            // Give the browser 50ms to paint the modal so it knows the exact pixel 
+            // container boundaries before calling the SVG drawing engine.
+            setTimeout(() => {
+                try {
+                    mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                } catch (err) {
+                    console.error("Mermaid initialization error", err);
+                }
+            }, 50);
+        });
+
+        closeArchModal.addEventListener('click', () => {
+            archModal.classList.remove('active');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === archModal) {
+                archModal.classList.remove('active');
+            }
+        });
+    }
+
 });
