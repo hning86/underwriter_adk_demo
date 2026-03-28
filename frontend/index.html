@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Underwriter - Risk Dashboard</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="index.css?v=4">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,32 +39,56 @@
 
             <div class="dashboard-grid">
                 <!-- Data Source Analytics -->
-                <section class="grid-card glass">
+                <section class="grid-card glass" id="bq-section">
                     <div class="card-header">
                         <h2><i data-lucide="database" class="neon-cyan"></i> Structured Data (BigQuery)</h2>
-                        <span class="badge badge-cyan">Aggregated claims</span>
+                        <div class="tab-controls">
+                            <button id="bq-tab-btn-data" class="tab-btn active">Client Profile</button>
+                            <button id="bq-tab-btn-sql" class="tab-btn">SQL Query</button>
+                        </div>
                     </div>
-                    <div class="card-content">
-                        <div class="data-summary" id="bq-summary">
-                            <div class="placeholder-text">Select a client to view BigQuery data.</div>
+                    <div class="card-content" style="padding: 0;">
+                        <!-- Data Tab -->
+                        <div id="bq-tab-pane-data" class="tab-pane active" style="padding: 1.5rem;">
+                            <div class="data-summary" id="bq-summary">
+                                <div class="placeholder-text">Select a client to view BigQuery data.</div>
+                            </div>
+                        </div>
+                        <!-- SQL Tab -->
+                        <div id="bq-tab-pane-sql" class="tab-pane" style="padding: 1.5rem;">
+                            <div class="rag-console" id="bq-sql-output">
+                                <div class="placeholder-text">Select a client to view SQL execution.</div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <section class="grid-card glass">
+                <section class="grid-card glass" id="unstructured-section">
                     <div class="card-header">
                         <h2><i data-lucide="file-text" class="neon-magenta"></i> Unstructured Data (Vertex AI Search)</h2>
-                        <span class="badge badge-magenta">Loss runs reports</span>
+                        <div class="tab-controls">
+                            <button id="tab-btn-pdf" class="tab-btn active">PDF Views</button>
+                            <button id="tab-btn-rag" class="tab-btn">RAG Engine</button>
+                        </div>
                     </div>
-                    <div class="card-content">
-                        <div class="data-summary" id="loss-summary">
-                            <div class="placeholder-text">Select a client to view loss run summaries.</div>
+                    <div class="card-content" style="padding: 0;">
+                        <!-- PDF Tab -->
+                        <div id="tab-pane-pdf" class="tab-pane active" style="padding: 1.5rem;">
+                            <div class="data-summary" id="loss-summary">
+                                <div class="placeholder-text">Select a client to view loss run summaries.</div>
+                            </div>
+                        </div>
+                        <!-- RAG Exec Tab -->
+                        <div id="tab-pane-rag" class="tab-pane" style="padding: 1.5rem;">
+                            <div class="rag-console" id="rag-output">
+                                <div class="placeholder-text">Generate a summary to view native RAG extractions.</div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
                 <!-- AI Synthesis Output -->
-                <section class="grid-card glass full-width" id="synthesis-section">
+                <section class="grid-card glass" id="synthesis-section">
                     <div class="card-header">
                         <h2><i data-lucide="brain" class="neon-purple"></i> AI-Assisted Synthesis & Recommendations</h2>
                         <span class="badge badge-purple" id="synthesis-badge">Awaiting data...</span>
@@ -87,6 +111,6 @@
     <script>
       lucide.createIcons();
     </script>
-    <script src="index.js"></script>
+    <script src="index.js?v=4"></script>
 </body>
 </html>

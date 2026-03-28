@@ -53,6 +53,12 @@ def get_client_profile_by_id(client_id: str) -> dict:
         FROM `{project_id}.underwriter_demo.client_profiles`
         WHERE client_id = @client_id
     """
+    display_query = f"""
+        SELECT *
+        FROM `{project_id}.underwriter_demo.client_profiles`
+        WHERE client_id = '{client_id}'
+    """
+    
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter("client_id", "STRING", client_id)
@@ -67,6 +73,8 @@ def get_client_profile_by_id(client_id: str) -> dict:
                 "name": row.name,
                 "industry": row.industry,
                 "bq_data": {
+                    "company_name": row.name,
+                    "industry": row.industry,
                     "company_size": row.company_size,
                     "annual_revenue": row.annual_revenue,
                     "headquarters": row.headquarters,
@@ -74,7 +82,8 @@ def get_client_profile_by_id(client_id: str) -> dict:
                     "primary_operations": row.primary_operations,
                     "number_of_facilities": row.number_of_facilities,
                     "safety_rating_class": row.safety_rating_class
-                }
+                },
+                "bq_query": display_query.strip()
             }
         return {"error": "Client profile found in memory but missing in BigQuery."}
     except Exception as e:
@@ -93,9 +102,10 @@ def get_loss_run_report(client_id: str) -> dict:
     search_client = discoveryengine.SearchServiceClient()
     serving_config = f"projects/{project_id}/locations/{location}/collections/default_collection/dataStores/{ds_id}/servingConfigs/default_search"
     
+    query = f"What are the significant claims, loss runs, and ergonomic or safety issues for {client_id}?"
     request = discoveryengine.SearchRequest(
         serving_config=serving_config,
-        query=f"What are the significant claims, loss runs, and ergonomic or safety issues for {client_id}?",
+        query=query,
         page_size=3,
         content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
             snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(return_snippet=True)
@@ -121,11 +131,11 @@ def get_loss_run_report(client_id: str) -> dict:
 
         if not snippets:
             print(f"\\n⚠️ [RAG DEBUG] No snippets retrieved for client '{client_id}'. Index may be compiling.")
-            return {"error": f"No relevant claims history found for client '{client_id}'."}
+            return {"error": f"No relevant claims history found for client '{client_id}'.", "query": query}
             
         combined_snippets = " \\n...\\n ".join(snippets)
         print(f"\\n🔍 [RAG DEBUG] Sending the following snippets to Gemini for {client_id}:\\n{combined_snippets}\\n=========================================\\n")
-        return {"loss_runs": {"extracted_claims_context": combined_snippets}}
+        return {"loss_runs": {"query": query, "extracted_claims_context": combined_snippets}}
         
     except Exception as e:
         return {"error": f"Vertex AI Search execution failed: {str(e)}"}
@@ -155,6 +165,8 @@ root_agent = Agent(
     2. ### High-Risk Factors Identified
     3. ### Mitigation Recommendations
     4. ### Underwriting Verdict
+    
+    CRITICAL INSTRUCTION: Do NOT include, quote, or parrot the raw Vertex Search Query strings or the exact extracted JSON snippet payload in your final response. The user already views the raw search tool logs in a separate RAG Engine UI tab. Your job is ONLY to synthesize the information into the 4 professional headers above.
     """,
     tools=[get_client_profile_by_id, get_loss_run_report]
 )

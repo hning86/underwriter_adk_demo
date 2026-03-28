@@ -55,6 +55,8 @@ async def generate_summary(request: GenerateRequest):
         prompt = f"Provide a risk assessment summary for client profile: {client_id}"
         
         response_text = ""
+        rag_payload = None
+        
         async for event in runner.run_async(
             user_id="ui_user",
             session_id=f"session_{client_id}",
@@ -64,11 +66,14 @@ async def generate_summary(request: GenerateRequest):
                 for part in event.content.parts:
                     if part.text:
                         response_text += part.text
+                    # Intercept Tool Returns
+                    if getattr(part, "function_response", None) and part.function_response.name == "get_loss_run_report":
+                        rag_payload = part.function_response.response
                         
         if not response_text:
             raise Exception("Empty response from ADK agent")
             
-        return {"summary": response_text}
+        return {"summary": response_text, "rag_payload": rag_payload}
         
     except Exception as e:
         print(f"ADK Agent call failed, using fallback simulation: {e}")

@@ -231,8 +231,27 @@ body {
 /* Dashboard Grid */
 .dashboard-grid {
     display: grid;
+    grid-template-areas: 
+        "bq unstructured"
+        "ai unstructured";
     grid-template-columns: 2fr 3fr;
     gap: 1.5rem;
+}
+
+#bq-section {
+    grid-area: bq;
+    min-height: auto;
+}
+
+#unstructured-section {
+    grid-area: unstructured;
+    display: flex;
+    flex-direction: column;
+}
+
+#synthesis-section {
+    grid-area: ai;
+    min-height: 400px;
 }
 
 .grid-card {
@@ -240,11 +259,6 @@ body {
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    min-height: 300px;
-}
-
-.full-width {
-    grid-column: span 2;
 }
 
 .card-header {
@@ -326,12 +340,83 @@ body {
     height: 100%;
 }
 
+/* Tab Container Styles */
+.tab-controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.4rem 0.2rem;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition-smooth);
+}
+.tab-btn:hover {
+    color: var(--text-secondary);
+}
+.tab-btn.active {
+    color: var(--neon-magenta);
+    border-bottom-color: var(--neon-magenta);
+}
+.tab-pane {
+    display: none;
+    height: 100%;
+    animation: fadeIn 0.3s ease-out forwards;
+}
+.tab-pane.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* RAG Console Styles */
+.rag-console {
+    background-color: rgba(9, 10, 15, 0.8);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 1.25rem;
+    height: 100%;
+    min-height: 900px;
+    overflow-y: auto;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+.rag-query-header {
+    color: var(--neon-cyan);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed var(--border-glass);
+}
+.rag-snippet-block {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    border-left: 3px solid var(--neon-magenta);
+}
+.rag-snippet-block b {
+    color: var(--neon-magenta);
+    font-weight: 800;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1024px) {
     .dashboard-grid {
+        grid-template-areas: 
+            "bq"
+            "ai"
+            "unstructured";
         grid-template-columns: 1fr;
-    }
-    .full-width {
-        grid-column: span 1;
     }
 }

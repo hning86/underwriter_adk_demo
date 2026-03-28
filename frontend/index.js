@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(res => res.json())
         .then(data => {
             renderSynthesis(data.summary);
+            if(data.rag_payload) renderRagDiagnostics(data.rag_payload);
         })
         .catch(err => {
             console.error("Error generating summary:", err);
@@ -80,7 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function resetUI() {
         generateBtn.disabled = true;
         bqSummary.innerHTML = `<div class="placeholder-text">Select a client to view BigQuery data.</div>`;
+        document.getElementById('bq-sql-output').innerHTML = `<div class="placeholder-text">Select a client to view SQL execution.</div>`;
         lossSummary.innerHTML = `<div class="placeholder-text">Select a client to view loss run summaries.</div>`;
+        document.getElementById('rag-output').innerHTML = `<div class="placeholder-text">Generate a summary to view native RAG extractions.</div>`;
+        
+        switchTab('pdf');
+        switchBqTab('data');
+        
         synthesisOutput.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="sparkles" class="empty-icon pulse"></i>
@@ -101,18 +108,34 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="metrics-grid">
                 ${bqEntries.map(([key, value]) => `
                 <div class="metric-card">
-                    <span class="metric-label">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                    <span class="metric-label">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}:</span>
                     <span class="metric-value">${typeof value === 'number' && key.includes('revenue') ? '$' + value.toLocaleString() : value}</span>
                 </div>`).join('')}
             </div>
         `;
 
+        if (data.bq_query) {
+            document.getElementById('bq-sql-output').innerHTML = `
+                <div class="rag-query-header">
+                    <strong>Executed BigQuery SQL:</strong><br/>
+                </div>
+                <div class="rag-snippet-block" style="border-left-color: var(--neon-cyan); margin-top: 1rem;">
+                    <span style="color: #f8fafc; font-family: monospace; white-space: pre-wrap;">${data.bq_query.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                </div>
+            `;
+        }
+        
+        switchBqTab('data');
+
         // Render Loss Runs preview as PDF iframe with cache buster to force reload
         lossSummary.innerHTML = `
-            <div class="pdf-container" style="height: 100%; min-height: 500px; width: 100%; border-radius: 8px; overflow: hidden;">
-                <iframe src="/reports/${data.id}_loss_runs.pdf#view=FitH&t=${Date.now()}" width="100%" height="100%" style="border: none;"></iframe>
+            <div class="pdf-container" style="display: flex; flex-direction: column; height: 85vh; min-height: 800px; width: 100%; border-radius: 8px; overflow: hidden;">
+                <iframe src="/reports/${data.id}_loss_runs.pdf#view=FitH&t=${Date.now()}" style="flex: 1; border: none; width: 100%;"></iframe>
             </div>
         `;
+        
+        switchTab('pdf');
+        document.getElementById('rag-output').innerHTML = `<div class="placeholder-text">Generate a summary to view native RAG extractions.</div>`;
     }
 
     function setLoadingState(isLoading) {
@@ -177,4 +200,85 @@ document.addEventListener("DOMContentLoaded", () => {
 
         return html;
     }
+
+    // --- Unstructured / RAG Tab Logic ---
+    const tabBtnPdf = document.getElementById('tab-btn-pdf');
+    const tabBtnRag = document.getElementById('tab-btn-rag');
+    const tabPanePdf = document.getElementById('tab-pane-pdf');
+    const tabPaneRag = document.getElementById('tab-pane-rag');
+
+    tabBtnPdf.addEventListener('click', () => switchTab('pdf'));
+    tabBtnRag.addEventListener('click', () => switchTab('rag'));
+
+    function switchTab(tabId) {
+        if (tabId === 'pdf') {
+            tabBtnPdf.classList.add('active');
+            tabPanePdf.classList.add('active');
+            tabBtnRag.classList.remove('active');
+            tabPaneRag.classList.remove('active');
+        } else {
+            tabBtnRag.classList.add('active');
+            tabPaneRag.classList.add('active');
+            tabBtnPdf.classList.remove('active');
+            tabPanePdf.classList.remove('active');
+        }
+    }
+
+    // --- Structured / BQ Tab Logic ---
+    const bqTabBtnData = document.getElementById('bq-tab-btn-data');
+    const bqTabBtnSql = document.getElementById('bq-tab-btn-sql');
+    const bqTabPaneData = document.getElementById('bq-tab-pane-data');
+    const bqTabPaneSql = document.getElementById('bq-tab-pane-sql');
+
+    bqTabBtnData.addEventListener('click', () => switchBqTab('data'));
+    bqTabBtnSql.addEventListener('click', () => switchBqTab('sql'));
+
+    function switchBqTab(tabId) {
+        if (!bqTabBtnData || !bqTabPaneData) return;
+        
+        if (tabId === 'data') {
+            bqTabBtnData.classList.add('active');
+            bqTabPaneData.classList.add('active');
+            bqTabBtnSql.classList.remove('active');
+            bqTabPaneSql.classList.remove('active');
+        } else {
+            bqTabBtnSql.classList.add('active');
+            bqTabPaneSql.classList.add('active');
+            bqTabBtnData.classList.remove('active');
+            bqTabPaneData.classList.remove('active');
+        }
+    }
+
+    // --- RAG Payload Render Logic ---
+    function renderRagDiagnostics(ragPayload) {
+        const ragOutput = document.getElementById('rag-output');
+        
+        if (!ragPayload || !ragPayload.loss_runs) {
+            ragOutput.innerHTML = `<div class="placeholder-text" style="color: #ff6b6b">Error retrieving RAG diagnostic data.</div>`;
+            return;
+        }
+
+        const data = ragPayload.loss_runs;
+        const queryText = data.query || "No query recorded";
+        const snippetsHtml = data.extracted_claims_context 
+            ? data.extracted_claims_context.split('\\n...\\n').map(snip => `<div class="rag-snippet-block">${snip}</div>`).join('')
+            : '<div class="placeholder-text">No snippets were retrieved by the engine.</div>';
+            
+        ragOutput.innerHTML = `
+            <div class="rag-query-header">
+                <strong>Executed Vertex Search Query:</strong><br/>
+                <span style="color: #f8fafc; font-style: italic;">"${queryText}"</span>
+            </div>
+            <div style="margin-bottom: 0.5rem; color: var(--neon-magenta); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                Lexical + Semantic Extractions:
+            </div>
+            <div class="rag-snippets-container">
+                ${snippetsHtml}
+            </div>
+        `;
+        
+        // Auto-switch to RAG tab momentarily to show off the cool extraction feature!
+        switchTab('rag');
+    }
+
 });
