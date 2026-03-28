@@ -26,9 +26,11 @@ MOCK_CLIENTS = {
         },
         "loss_runs": {
             "narrative": "Acme Logistics operates a fleet of 50 delivery vehicles. Recent safety checks suggest maintenance logs are incomplete. Drivers reported overtime peaks during holiday seasons.",
-            "key_incidents": [
-                "Rear-end collision in warehouse yard.",
-                "Slip and fall on ice in depot."
+            "claims_history": [
+                {"policy_period": "2023-2024", "date_of_loss": "2023-11-15", "type": "Auto", "description": "Rear-end collision in warehouse yard.", "paid": "$12,000", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2023-2024", "date_of_loss": "2024-01-05", "type": "Workers Comp", "description": "Slip and fall on ice in depot.", "paid": "$4,500", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2022-2023", "date_of_loss": "2023-01-20", "type": "Cargo", "description": "Cargo damage claim (Winter storm ice event).", "paid": "$75,000", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2021-2022", "date_of_loss": "2021-08-14", "type": "Auto", "description": "Rollover accident.", "paid": "$50,000", "reserves": "$15,000", "status": "Open"}
             ]
         }
     },
@@ -46,9 +48,10 @@ MOCK_CLIENTS = {
         },
         "loss_runs": {
             "narrative": "Zenith has automated production lines. Safety metrics are above average, but shop floor ergonomics are a recurring complaint in worker surveys.",
-            "key_incidents": [
-                "Minor hand injury on conveyor belt.",
-                "Back strain from manual lifting."
+            "claims_history": [
+                {"policy_period": "2023-2024", "date_of_loss": "2023-10-09", "type": "Workers Comp", "description": "Minor hand injury on conveyor belt.", "paid": "$2,500", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2022-2023", "date_of_loss": "2022-04-12", "type": "Workers Comp", "description": "Back strain from manual lifting.", "paid": "$8,000", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2020-2021", "date_of_loss": "2021-03-24", "type": "Workers Comp", "description": "Machine malfunction injury (Settled).", "paid": "$120,000", "reserves": "$0", "status": "Closed"}
             ]
         }
     },
@@ -67,9 +70,11 @@ MOCK_CLIENTS = {
         },
         "loss_runs": {
             "narrative": "Stellar Retail has rapid expansion. High turnover of warehouse staff. Stress reports during peak delivery windows.",
-            "key_incidents": [
-                "Distracted driver warning.",
-                "Tripping hazard in packing aisle."
+            "claims_history": [
+                {"policy_period": "2023-2024", "date_of_loss": "2023-12-05", "type": "Auto", "description": "Distracted driver warning/Near miss.", "paid": "$0", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2023-2024", "date_of_loss": "2023-11-20", "type": "Workers Comp", "description": "Tripping hazard in packing aisle.", "paid": "$3,200", "reserves": "$1,000", "status": "Open"},
+                {"policy_period": "2022-2023", "date_of_loss": "2022-08-30", "type": "Property", "description": "Warehouse inventory theft.", "paid": "$45,000", "reserves": "$0", "status": "Closed"},
+                {"policy_period": "2022-2023", "date_of_loss": "2023-01-14", "type": "Auto", "description": "Delivery van bumper damage.", "paid": "$3,500", "reserves": "$0", "status": "Closed"}
             ]
         }
     }
