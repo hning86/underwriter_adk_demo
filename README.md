@@ -1,6 +1,6 @@
 # AI-Assisted Underwriter Demo
 
-This AI-Assisted Underwriting demo integrates **Gemini** and the **Google Agent Development Kit (ADK)** to automate the synthesis of structured telemetry (simulated BigQuery data) and unstructured loss run reports (simulated Vertex AI Search). 
+This AI-Assisted Underwriting demo integrates **Gemini** and the **Google Agent Development Kit (ADK)** to automate the synthesis of structured client data (live Google BigQuery data) and unstructured loss run reports (native PDF documents). 
 
 By selecting a client profile in the web dashboard and clicking "Generate Risk Summary", underwriters receive an instant, agent-driven analysis that identifies high-risk patterns, correlates risk factors, and provides automated mitigation recommendations directly.
 
@@ -25,20 +25,20 @@ flowchart TB
     
     subgraph "Google ADK Orchestration"
         Agent["🤖 Underwriter Agent"]
-        Tools["🛠️ Tools (Telemetry Fetcher)"]
+        Tools["🛠️ Tools (Profile Fetcher)"]
         Gemini["🧠 Gemini 2.5 Flash"]
     end
     
     subgraph "Data Storage"
-        BQ[("📊 Structured Data<br>(Mock BigQuery)")]
-        VS[("📄 Unstructured Data<br>(Mock Vertex Search)")]
+        BQ[("📊 Structured Data<br>(Google BigQuery)")]
+        VS[("📄 RAG Document Index<br>(Vertex AI Search)")]
     end
 
     UI -- "1. Select Client & Generate" --> API
     API -- "2. Invokes via Session" --> Runner
     Runner -- "3. Asynchronous Prompt" --> Agent
     Agent -- "4. Reason about goal" --> Gemini
-    Agent -- "5. Request client telemetry" --> Tools
+    Agent -- "5. Request client profile" --> Tools
     Tools -.-> BQ
     Tools -.-> VS
     Tools -- "6. Return JSON context" --> Agent
@@ -51,7 +51,7 @@ flowchart TB
 
 - **Backend / Orchestration:**
   - **FastAPI:** High-performance Python server managing endpoints.
-  - **Google ADK (Agent Development Kit):** Orchestrates Gemini interactions, tool-calling (to fetch simulated database records), and asynchronous context streaming via the `Runner`.
+  - **Google ADK (Agent Development Kit):** Orchestrates Gemini interactions, tool-calling (to query live BigQuery resources and Vertex AI Search unstructured document indices), and asynchronous context streaming via the `Runner`.
   - **Gemini 2.5 Flash:** Core LLM configured within the ADK for high-accuracy synthesis.
 - **Frontend / UI:**
   - Single-Page Application using Vanilla HTML5, CSS3, and JavaScript.
@@ -73,20 +73,29 @@ The project is structured into `frontend/` and `backend/` directories, but runs 
    uv sync
    ```
 
-2. **Set Environment Variables:**
-   Export your Google API key to allow the ADK agent to perform synthesis.
+2. **Authenticate Google Cloud & Gemini:**
+   Ensure you have Application Default Credentials (ADC) configured in your environment to authenticate with BigQuery, and export your Gemini API key.
    ```bash
+   gcloud auth application-default login
    export GOOGLE_API_KEY="your_api_key_here"
    ```
 
-3. **Start the FastAPI Server:**
+3. **Seed the Cloud Databases:**
+   Run the setup scripts to provision and populate the `underwriter_demo.client_profiles` table in BigQuery, and build the native PDF index in Vertex AI Search (RAG).
+   ```bash
+   uv run python scripts/setup_bq.py
+   uv run python scripts/setup_rag.py
+   ```
+   *(Note: Vertex AI Search indexing for newly created data stores can take up to 15-30 minutes to complete in the background).*
+
+4. **Start the FastAPI Server:**
    Run the `uvicorn` server to serve the backend endpoints and mount the root frontend UI.
    ```bash
    uv run uvicorn backend.main:app --port 8000 --host 0.0.0.0
    ```
    *(Optional: pass the `--reload` flag during active development).*
 
-4. **Access the Dashboard:**
+5. **Access the Dashboard:**
    Open your browser and navigate to:
    [http://localhost:8000/](http://localhost:8000/)
 
@@ -99,8 +108,20 @@ UnderwriterDemo/
 │   ├── main.py                 # FastAPI backend routing and ADK runner integration
 │   └── underwriter_agent/
 │       └── agent.py            # Google ADK agent definition, tools, and mock data
+├── scripts/                    # Initialization and diagnostic tools
+│   ├── setup_bq.py             # provisions mock metadata tables in BigQuery
+│   ├── setup_rag.py            # Uploads PDFs with exact metadata to Vertex AI
+│   └── test_rag.py             # Standalone CLI validation script to monitor Search results
 └── frontend/                   # Vanilla frontend assets wrapped and mounted at root
     ├── index.html
     ├── index.css
     └── index.js
+```
+
+## Diagnostics & Testing
+
+The project includes a standalone script to manually execute Data Store searches against the Cloud pipeline without spinning up the Uvicorn Agent server. This is useful to verify the native metadata filtering (`client_id`) and inspect the exact JSON snippets passed to the Underwriter AI.
+
+```bash
+uv run python scripts/test_rag.py --client stella
 ```

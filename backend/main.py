@@ -4,10 +4,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from google.genai import types
 
+from google.cloud import bigquery
+
 # ADK Imports
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from backend.underwriter_agent.agent import app as agent_app, MOCK_CLIENTS, list_client_profiles, get_client_telemetry
+from backend.underwriter_agent.agent import app as agent_app, get_client_profile_by_id
 
 app = FastAPI()
 
@@ -20,11 +22,18 @@ class GenerateRequest(BaseModel):
 
 @app.get("/api/clients")
 def get_clients():
-    return list_client_profiles()
+    project_id = os.environ.get('GOOGLE_CLOUD_PROJECT', 'ninghai-ccai')
+    bq_client = bigquery.Client(project=project_id)
+    query = f"SELECT client_id as id, name FROM `{project_id}.underwriter_demo.client_profiles`"
+    try:
+        results = bq_client.query(query).result()
+        return [{"id": row.id, "name": row.name} for row in results]
+    except Exception as e:
+        return [{"error": f"Failed to list profiles: {str(e)}"}]
 
 @app.get("/api/clients/{client_id}")
 def get_client(client_id: str):
-    data = get_client_telemetry(client_id)
+    data = get_client_profile_by_id(client_id)
     if "error" in data:
         raise HTTPException(status_code=404, detail=data["error"])
     return data
@@ -32,10 +41,9 @@ def get_client(client_id: str):
 @app.post("/api/generate-summary")
 async def generate_summary(request: GenerateRequest):
     client_id = request.clientId
-    if client_id not in MOCK_CLIENTS:
+    profile = get_client_profile_by_id(client_id)
+    if "error" in profile:
         raise HTTPException(status_code=404, detail="Client not found")
-
-    client = MOCK_CLIENTS[client_id]
     
     try:
         runner = Runner(

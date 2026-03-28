@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="loading-state">
                     <div class="ai-loader"></div>
                     <h3>Consulting Gemini 2.5 Flash</h3>
-                    <p>Blending structured claims tables with unstructured loss run telemetry...</p>
+                    <p>Blending structured claims tables with unstructured loss run reports...</p>
                 </div>
             `;
             synthesisBadge.textContent = "Generating...";
