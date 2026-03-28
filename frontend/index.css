@@ -237,9 +237,9 @@ body {
 .dashboard-grid {
     display: grid;
     grid-template-areas: 
-        "bq unstructured"
-        "ai unstructured";
-    grid-template-columns: 2fr 3fr;
+        "bq ai"
+        "unstructured ai";
+    grid-template-columns: 1.1fr 1fr;
     gap: 1.5rem;
 }
 
@@ -391,12 +391,13 @@ body {
 
 /* RAG Console Styles */
 .rag-console {
-    background-color: var(--brand-dark-blue);
+    background-color: var(--brand-navy);
     border: 1px solid var(--border-glass);
     border-radius: 8px;
     padding: 1.25rem;
     height: 100%;
-    min-height: 900px;
+    min-height: 250px;
+    max-height: 60vh;
     overflow-y: auto;
     font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
     font-size: 0.85rem;
@@ -404,7 +405,7 @@ body {
     color: #cbd5e1;
 }
 .rag-query-header {
-    color: var(--brand-blue);
+    color: var(--brand-orange);
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
@@ -414,10 +415,10 @@ body {
     padding: 1rem;
     border-radius: 6px;
     margin-bottom: 0.75rem;
-    border-left: 3px solid var(--brand-blue);
+    border-left: 3px solid var(--brand-orange);
 }
 .rag-snippet-block b {
-    color: var(--brand-gold);
+    color: var(--brand-orange);
     font-weight: 800;
 }
 
