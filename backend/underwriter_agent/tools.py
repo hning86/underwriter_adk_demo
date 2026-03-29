@@ -1,4 +1,5 @@
 import os
+import re
 from google.cloud import bigquery
 from google.cloud import discoveryengine_v1 as discoveryengine
 
@@ -96,14 +97,18 @@ def get_loss_run_report(client_id: str) -> dict:
                     continue
                 if result.document.derived_struct_data:
                     for snip in result.document.derived_struct_data.get("snippets", []):
-                        all_snippets.append(snip.get("snippet", ""))
+                        raw_snip = snip.get("snippet", "")
+                        clean_snip = re.sub(r'</?b>', '', raw_snip)
+                        clean_snip = clean_snip.replace('...', '').strip()
+                        if clean_snip:
+                            all_snippets.append(clean_snip)
 
         if not all_snippets:
             print(f"\\n⚠️ [RAG DEBUG] No snippets retrieved for client '{client_id}'. Index may be compiling.")
             return {"error": f"No relevant claims history found for client '{client_id}'.", "query": "Ensemble queries executed"}
             
         unique_snippets = list(set(all_snippets))
-        combined_snippets = " \\n...\\n ".join(unique_snippets)
+        combined_snippets = "\\n\\n".join(unique_snippets)
         print(f"\\n🔍 [RAG DEBUG] Sending the following Ensemble snippets to Gemini for {client_id}:\\n{combined_snippets}\\n=========================================\\n")
         return {"loss_runs": {"queries": ensemble_queries, "extracted_claims_context": combined_snippets}}
         

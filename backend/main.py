@@ -1,5 +1,7 @@
 import os
+import json
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from google.genai import types
@@ -45,40 +47,48 @@ async def generate_summary(request: GenerateRequest):
     profile = get_client_profile_by_id(client_id)
     if "error" in profile:
         raise HTTPException(status_code=404, detail="Client not found")
-    
-    try:
-        runner = Runner(
-            app=agent_app,
-            session_service=InMemorySessionService(),
-            auto_create_session=True
-        )
         
-        prompt = f"Provide a risk assessment summary for client profile: {client_id}"
-        
-        response_text = ""
-        rag_payload = None
-        
-        async for event in runner.run_async(
-            user_id="ui_user",
-            session_id=f"session_{client_id}",
-            new_message=types.Content(role="user", parts=[types.Part(text=prompt)])
-        ):
-            if event.content and event.content.parts:
-                for part in event.content.parts:
-                    if part.text:
-                        response_text += part.text
-                    # Intercept Tool Returns
-                    if getattr(part, "function_response", None) and part.function_response.name == "get_loss_run_report":
-                        rag_payload = part.function_response.response
-                        
-        if not response_text:
-            raise Exception("Empty response from ADK agent")
+    async def event_generator():
+        try:
+            runner = Runner(
+                app=agent_app,
+                session_service=InMemorySessionService(),
+                auto_create_session=True
+            )
             
-        return {"summary": response_text, "rag_payload": rag_payload}
-        
-    except Exception as e:
-        print(f"ADK Agent call failed: {e}")
-        raise HTTPException(status_code=500, detail=f"ADK Agent execution failed: {str(e)}")
+            prompt = f"Provide a risk assessment summary for client profile: {client_id}"
+            
+            async for event in runner.run_async(
+                user_id="ui_user",
+                session_id=f"session_{client_id}",
+                new_message=types.Content(role="user", parts=[types.Part(text=prompt)])
+            ):
+                if event.content and event.content.parts:
+                    for part in event.content.parts:
+                        if getattr(part, "function_call", None) and part.function_call.name == "get_loss_run_report":
+                            client_id_arg = part.function_call.args.get('client_id', client_id)
+                            queries = [
+                                f"Provide a detailed summary of all financial loss runs and structured claims history for {client_id_arg}.",
+                                f"What are the specific safety violations, ergonomic incidents, or warehouse accidents for {client_id_arg}?",
+                                f"List all exact dollar payout amounts, claim costs, reserves, and cargo damages for {client_id_arg}."
+                            ]
+                            yield f"data: {json.dumps({'state': 'rag_search_started', 'queries': queries})}\n\n"
+                            
+                        # Intercept Tool Returns
+                        if getattr(part, "function_response", None) and part.function_response.name == "get_loss_run_report":
+                            rag_payload = part.function_response.response
+                            yield f"data: {json.dumps({'state': 'rag_search_complete', 'rag_payload': rag_payload})}\n\n"
+                            
+                        if part.text:
+                            yield f"data: {json.dumps({'state': 'generating', 'chunk': part.text})}\n\n"
+                            
+            yield f"data: {json.dumps({'state': 'done'})}\n\n"
+            
+        except Exception as e:
+            print(f"ADK Agent stream failed: {e}")
+            yield f"data: {json.dumps({'state': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 # Mount Static Files for UI (placed at bottom to avoid shadowing API routes)

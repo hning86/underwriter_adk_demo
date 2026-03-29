@@ -58,22 +58,103 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!clientSelect.value) return;
 
         setLoadingState(true);
+        switchTab('rag');
+        document.getElementById('rag-output').innerHTML = `
+            <div class="rag-query-header" style="opacity: 0.7">
+                <strong>Initializing AI Agent Workflow...</strong><br/>
+                <span style="color: #64748b; font-style: italic;">Engaging Vertex AI...</span>
+            </div>
+            <div style="display:flex; justify-content:center; align-items:center; padding:2rem;">
+                <div class="spinner" style="border-right-color: var(--neon-cyan); height: 24px; width: 24px;"></div>
+            </div>
+        `;
 
-        fetch("/api/generate-summary", {
+    fetch("/api/generate-summary", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ clientId: clientSelect.value })
         })
-        .then(res => res.json())
-        .then(data => {
-            renderSynthesis(data.summary);
-            if(data.rag_payload) renderRagDiagnostics(data.rag_payload);
+        .then(async res => {
+            if (!res.ok) throw new Error("Network response was not ok");
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let isTypingStarted = false;
+            let fullMarkdown = ""; 
+            let displayLength = 0; 
+            
+            let typeInterval = setInterval(() => {
+                if (displayLength < fullMarkdown.length) {
+                    // Constant pace: 3 chars per 15ms = ~200 chars/second
+                    // Capped dynamically so it doesn't take longer than 5-8 seconds total
+                    const charsToAdd = Math.min(4, Math.max(2, Math.floor((fullMarkdown.length - displayLength) / 50)));
+                    displayLength += charsToAdd;
+                    const currentHTML = convertSimpleMarkdown(fullMarkdown.substring(0, displayLength));
+                    synthesisOutput.innerHTML = `<div class="ai-response">${currentHTML}</div>`;
+                }
+            }, 15);
+            
+            try {
+                let buffer = "";
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    let lines = buffer.split('\n\n');
+                    buffer = lines.pop(); // keep last incomplete chunk
+                    
+                    for (let line of lines) {
+                        line = line.trim();
+                        if (line.startsWith('data: ')) {
+                            const jsonStr = line.substring(6);
+                            try {
+                                const data = JSON.parse(jsonStr);
+                                if (data.state === 'rag_search_started') {
+                                    document.getElementById('rag-output').innerHTML = `
+                                        <div class="rag-query-header">
+                                            <strong>Executing Vertex AI Search...</strong><br/>
+                                            <span style="color: #64748b; font-style: italic;">Retrieving Multi-Query Ensemble Context...</span>
+                                        </div>
+                                        <ul class="rag-query-list" style="margin-top: 1rem; margin-bottom: 2rem; padding-left: 0; list-style-type: none;">
+                                            ${(data.queries || []).map(q => `<li style="margin-bottom: 0.5rem;"><i data-lucide="search" style="width:14px; height:14px; margin-right:6px; color:var(--neon-cyan);"></i> ${q}</li>`).join('')}
+                                        </ul>
+                                        <div style="display:flex; justify-content:center; align-items:center; padding:1rem;">
+                                            <div class="spinner" style="border-right-color: var(--neon-cyan); height: 32px; width: 32px;"></div>
+                                        </div>
+                                    `;
+                                    lucide.createIcons();
+                                    switchTab('rag');
+                                } else if (data.state === 'rag_search_complete') {
+                                    renderRagDiagnostics(data.rag_payload);
+                                } else if (data.state === 'generating') {
+                                    if (!isTypingStarted) {
+                                        isTypingStarted = true;
+                                        synthesisOutput.innerHTML = `<div class="ai-response"></div>`;
+                                    }
+                                    fullMarkdown += data.chunk;
+                                } else if (data.state === 'error') {
+                                    throw new Error(data.message);
+                                }
+                            } catch (err) {
+                                console.error("Parse error:", err);
+                            }
+                        }
+                    }
+                }
+            } finally {
+                const checkDone = setInterval(() => {
+                    if (displayLength >= fullMarkdown.length) {
+                        clearInterval(checkDone);
+                        clearInterval(typeInterval);
+                        setLoadingState(false);
+                    }
+                }, 100);
+            }
         })
         .catch(err => {
             console.error("Error generating summary:", err);
             renderSynthesis("Error generating summary. Please check logs.");
-        })
-        .finally(() => {
             setLoadingState(false);
         });
     });
@@ -263,9 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ? data.queries.map(q => `<div style="color: #f8fafc; font-style: italic; margin-bottom: 4px;">• "${q}"</div>`).join('')
             : `<span style="color: #f8fafc; font-style: italic;">"${data.query || "No queries recorded"}"</span>`;
             
-        const snippetsHtml = data.extracted_claims_context 
-            ? data.extracted_claims_context.split(/\s*\\n\.\.\.\\n\s*|\s*\n\.\.\.\n\s*/).map(snip => `<div class="rag-snippet-block">${snip}</div>`).join('')
-            : '<div class="placeholder-text">No snippets were retrieved by the engine.</div>';
+        const rawSnippetsText = data.extracted_claims_context || "No snippets were retrieved.";
             
         ragOutput.innerHTML = `
             <div class="rag-query-header">
@@ -275,13 +354,25 @@ document.addEventListener("DOMContentLoaded", () => {
             <div style="margin-bottom: 0.5rem; color: var(--neon-magenta); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
                 Lexical + Semantic Extractions:
             </div>
-            <div class="rag-snippets-container">
-                ${snippetsHtml}
+            <div class="rag-snippets-container" id="rag-snippets-box" style="white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; padding: 1rem;">
             </div>
         `;
         
-        // Auto-switch to RAG tab momentarily to show off the cool extraction feature!
         switchTab('rag');
+        
+        const snippetsBox = document.getElementById('rag-snippets-box');
+        let displayLen = 0;
+        
+        const ragTypeInterval = setInterval(() => {
+            if (displayLen < rawSnippetsText.length) {
+                const charsToAdd = Math.min(6, Math.max(2, Math.floor((rawSnippetsText.length - displayLen) / 50)));
+                displayLen += charsToAdd;
+                const currentText = rawSnippetsText.substring(0, displayLen);
+                snippetsBox.innerHTML = currentText.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+            } else {
+                clearInterval(ragTypeInterval);
+            }
+        }, 15);
     }
 
     // --- Modal Logic ---
