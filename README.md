@@ -99,6 +99,22 @@ The project is structured into `frontend/` and `backend/` directories, but runs 
    Open your browser and navigate to:
    [http://localhost:8000/](http://localhost:8000/)
 
+## Deploying to Google Cloud Run
+
+To containerize and launch the Underwriter Workbench globally, simply execute the automated deployment script:
+```bash
+./deploy.sh
+```
+
+**Secure Access (Zero-Trust):**
+By design, the deployment disables unauthenticated public access. Browsing directly to the live `.run.app` URL will result in a `403 Forbidden` error unless you authenticate. 
+To securely tunnel your local Google Cloud credentials into the live production service for developer testing, open a new terminal tab and spin up the natively authenticated proxy:
+
+```bash
+gcloud run services proxy underwriter-workbench --region us-central1 --port 8080
+```
+You can now securely access the production app via `http://localhost:8080`.
+
 ## Project Structure
 
 ```text
