@@ -85,9 +85,8 @@ def get_loss_run_report(client_id: str) -> dict:
                 query=query,
                 page_size=3,
                 content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                    snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
-                        return_snippet=True,
-                        max_snippet_count=3
+                    extractive_content_spec=discoveryengine.SearchRequest.ContentSearchSpec.ExtractiveContentSpec(
+                        max_extractive_segment_count=1
                     )
                 )
             )
@@ -96,12 +95,12 @@ def get_loss_run_report(client_id: str) -> dict:
                 if result.document.id != client_id:
                     continue
                 if result.document.derived_struct_data:
-                    for snip in result.document.derived_struct_data.get("snippets", []):
-                        raw_snip = snip.get("snippet", "")
-                        clean_snip = re.sub(r'</?b>', '', raw_snip)
-                        clean_snip = clean_snip.replace('...', '').strip()
-                        if clean_snip:
-                            all_snippets.append(clean_snip)
+                    for seg in result.document.derived_struct_data.get("extractive_segments", []):
+                        raw_seg = seg.get("content", "")
+                        clean_seg = re.sub(r'</?b>', '', raw_seg)
+                        clean_seg = clean_seg.replace('...', '').strip()
+                        if clean_seg:
+                            all_snippets.append(clean_seg)
 
         if not all_snippets:
             print(f"\\n⚠️ [RAG DEBUG] No snippets retrieved for client '{client_id}'. Index may be compiling.")
