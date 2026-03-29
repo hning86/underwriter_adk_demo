@@ -259,15 +259,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const data = ragPayload.loss_runs;
-        const queryText = data.query || "No query recorded";
+        const queriesHtml = data.queries && Array.isArray(data.queries)
+            ? data.queries.map(q => `<div style="color: #f8fafc; font-style: italic; margin-bottom: 4px;">• "${q}"</div>`).join('')
+            : `<span style="color: #f8fafc; font-style: italic;">"${data.query || "No queries recorded"}"</span>`;
+            
         const snippetsHtml = data.extracted_claims_context 
             ? data.extracted_claims_context.split(/\s*\\n\.\.\.\\n\s*|\s*\n\.\.\.\n\s*/).map(snip => `<div class="rag-snippet-block">${snip}</div>`).join('')
             : '<div class="placeholder-text">No snippets were retrieved by the engine.</div>';
             
         ragOutput.innerHTML = `
             <div class="rag-query-header">
-                <strong>Executed Vertex Search Query:</strong><br/>
-                <span style="color: #f8fafc; font-style: italic;">"${queryText}"</span>
+                <strong>Executed Vertex Search Queries (Ensemble):</strong><br/>
+                ${queriesHtml}
             </div>
             <div style="margin-bottom: 0.5rem; color: var(--neon-magenta); font-weight: bold; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
                 Lexical + Semantic Extractions:

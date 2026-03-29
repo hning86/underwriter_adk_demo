@@ -105,7 +105,7 @@ def get_loss_run_report(client_id: str) -> dict:
         unique_snippets = list(set(all_snippets))
         combined_snippets = " \\n...\\n ".join(unique_snippets)
         print(f"\\n🔍 [RAG DEBUG] Sending the following Ensemble snippets to Gemini for {client_id}:\\n{combined_snippets}\\n=========================================\\n")
-        return {"loss_runs": {"query": f"Ensemble Search (3 deep analytical filters applied for {client_id})", "extracted_claims_context": combined_snippets}}
+        return {"loss_runs": {"queries": ensemble_queries, "extracted_claims_context": combined_snippets}}
         
     except Exception as e:
         return {"error": f"Vertex AI Search execution failed: {str(e)}"}
