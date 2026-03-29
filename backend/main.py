@@ -76,57 +76,9 @@ async def generate_summary(request: GenerateRequest):
         return {"summary": response_text, "rag_payload": rag_payload}
         
     except Exception as e:
-        print(f"ADK Agent call failed, using fallback simulation: {e}")
-        return {"summary": get_fallback_summary(client)}
+        print(f"ADK Agent call failed: {e}")
+        raise HTTPException(status_code=500, detail=f"ADK Agent execution failed: {str(e)}")
 
-def get_fallback_summary(client):
-    if client['id'] == 'acme':
-        return """
-### Executive Summary
-**Acme Logistics** presents a *High-Risk* profile due to elevated loss ratios (82%) and recurring weather-related claims. The synthesis of BQ frequency data and narrative reports points to systemic gaps in route safety management during adverse conditions.
-
-### High-Risk Factors Identified
-- **Clustered Claims Trigger**: Correlating the $75k cargo claim with "Winter peaks" suggests lack of proactive routing procedures or anti-skid chain deployment.
-- **Narrative Overlaps**: Multiple incidents match reports of "Incomplete maintenance logs" coupled with "Overtime spikes", increasing statistical likelihood of fatigue-driven accidents.
-
-### Mitigation Recommendations
-- Implement telematics tracking for speed and routing compliance.
-- Mandate pre-shift vehicle checks using digital logging apps to standardize maintenance tracking.
-
-### Underwriting Verdict
-**Refer to Committee** (Due to loss ratio > 75% threshold).
-"""
-    elif client['id'] == 'zenith':
-        return """
-### Executive Summary
-**Zenith Manufacturing** presents a *Low-to-Medium Risk* profile. An excellent loss ratio (45%) indicates robust safety cultures, though ergonomic and conveyors narratives indicate slight operational friction.
-
-### High-Risk Factors Identified
-- **Micro-hazard Frequency**: While large settlements are rare, "Ergonomic complaints" and "Moving conveyor" incidents signal potential for Cumulative Trauma Disorder (CTD) claims if left unmanaged.
-
-### Mitigation Recommendations
-- Conduct workplace ergonomic assessments for packing stations.
-- Verify conveyor guards meet OSHA standards and perform lockout-tagout drills.
-
-### Underwriting Verdict
-**Auto-Bind** with standard pricing adjustments.
-"""
-    else:
-        return """
-### Executive Summary
-**Stellar Retail** exhibits a *Medium-Risk* profile. High claims frequency (22/yr) is typical for rapid e-commerce expansion, but "Stress reports" and theft risks indicate potential operational strain causing delivery inefficiencies.
-
-### High-Risk Factors Identified
-- **Fatigue Indicators**: Narrative links "Distraction warnings" to peak delivery hours, suggesting driver routing optimization needs oversight.
-- **Shrinkage & Tripping Variables**: Inventory theft overlapping with warehouse clutter (tripping hazards) shows workflow congestion.
-
-### Mitigation Recommendations
-- Standardize driver fatigue training and fatigue-management rest schedules.
-- Optimize warehouse layout using 5S lean principles to reduce trip hazards.
-
-### Underwriting Verdict
-**Refer to Committee** for audit verification on expansion metrics.
-"""
 
 # Mount Static Files for UI (placed at bottom to avoid shadowing API routes)
 app.mount("/reports", StaticFiles(directory="reports"), name="reports")
