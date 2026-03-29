@@ -9,7 +9,8 @@ from google.cloud import bigquery
 # ADK Imports
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from backend.underwriter_agent.agent import app as agent_app, get_client_profile_by_id
+from backend.underwriter_agent.agent import app as agent_app
+from backend.underwriter_agent.tools import get_client_profile_by_id
 
 app = FastAPI()
 

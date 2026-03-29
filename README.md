@@ -12,7 +12,7 @@ By selecting a client profile in the web dashboard and clicking "Generate Risk S
 
 ## Architecture & Technology Stack
 
-Below is the architecture diagram illustrating how the web dashboard, FastAPI server, Google ADK orchestration, and simulated data sources interact to generate the risk assessment.
+Below is the architecture diagram illustrating how the web dashboard, FastAPI server, Google ADK orchestration, and live Google Cloud data pipelines interact to generate the risk assessment.
 
 ```mermaid
 flowchart TB
@@ -123,11 +123,12 @@ UnderwriterDemo/
 ├── backend/
 │   ├── main.py                 # FastAPI backend routing and ADK runner integration
 │   └── underwriter_agent/
-│       └── agent.py            # Google ADK agent definition, tools, and mock data
+│       ├── agent.py            # Core Google ADK agent orchestration logic
+│       └── tools.py            # External Google Cloud data retrieval tools
 ├── scripts/                    # Initialization and diagnostic tools
-│   ├── setup_bq.py             # provisions mock metadata tables in BigQuery
-│   ├── setup_rag.py            # Uploads PDFs with exact metadata to Vertex AI
-│   └── test_rag.py             # Standalone CLI validation script to monitor Search results
+│   ├── setup_bq.py             # Provisions structured client profile datasets in BigQuery
+│   ├── setup_rag.py            # Uploads PDFs with exact metadata to Vertex AI Search
+│   └── test_rag.py             # CLI validation script natively evaluating backend tools logic
 └── frontend/                   # Vanilla frontend assets wrapped and mounted at root
     ├── index.html
     ├── index.css
