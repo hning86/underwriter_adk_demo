@@ -16,7 +16,7 @@ Below is the architecture diagram illustrating how the web dashboard, FastAPI se
 
 ```mermaid
 flowchart TB
-    UI["💻 Web Dashboard<br>(HTML/JS/CSS)"]
+    UI["💻 Workbench UI<br/>(HTML/JS/CSS)"]
     
     subgraph "FastAPI Server"
         API["⚡ API Endpoints"]
@@ -30,23 +30,23 @@ flowchart TB
     end
     
     subgraph "Data Storage"
-        BQ[("📊 Structured Data<br>(Google BigQuery)")]
-        VS[("📄 RAG Document Index<br>(Vertex AI Search)")]
+        BQ[("📊 Structured Data<br/>(Google BigQuery)")]
+        VS[("📄 RAG Document Index<br/>(Vertex AI Search)")]
     end
 
-    UI -- "1. Select Client & Generate" --> API
-    API -- "2. Invokes via Session" --> Runner
-    Runner -- "3. Asynchronous Prompt" --> Agent
-    Agent -- "4. Reason about goal" --> Gemini
-    Agent -- "5. Request client profile" --> Tools
+    UI -->|1. Select Client and Generate| API
+    API -->|2. Invoke via Session| Runner
+    Runner -->|3. Asynchronous Prompt| Agent
+    Agent -->|4. Reason about goal| Gemini
+    Agent -->|5. Request client profile| Tools
     Tools -.-> BQ
     Tools -.-> VS
-    Tools -- "6. Return JSON context" --> Agent
-    Agent -- "7. Feed context for synthesis" --> Gemini
-    Gemini -- "8. Risk Assessment Markdown" --> Agent
-    Agent -- "9. Stream output" --> Runner
-    Runner -- "10. HTTP JSON Response" --> API
-    API -- "11. Render Dashboard" --> UI
+    Tools -->|6. Return JSON context| Agent
+    Agent -->|7. Feed context for synthesis| Gemini
+    Gemini -->|8. Risk Assessment Markdown| Agent
+    Agent -->|9. Stream output| Runner
+    Runner -->|10. HTTP JSON Response| API
+    API -->|11. Render Dashboard| UI
 ```
 
 - **Backend / Orchestration:**
@@ -55,7 +55,7 @@ flowchart TB
   - **Gemini 2.5 Flash:** Core LLM configured within the ADK for high-accuracy synthesis.
 - **Frontend / UI:**
   - Single-Page Application using Vanilla HTML5, CSS3, and JavaScript.
-  - Premium "Cyber-Dark" theme featuring glassmorphism and modern micro-animations.
+  - Professional corporate light-mode theme (Safety Insurance branding) featuring interactive diagnostic data panes and native Mermaid architecture overlays.
 
 ## Prerequisites
 

@@ -35,7 +35,7 @@
                 <div class="page-title" style="display: flex; align-items: center; gap: 1rem;">
                     <img src="https://www.safetyinsurance.com/scripts/logos/safetyinsurance_logo.svg" alt="Safety Insurance Corporation" style="height: 40px; margin-right: 0.5rem;">
                     <div>
-                        <h1>Risk Assessment Workspace</h1>
+                        <h1>Underwriting Workbench</h1>
                         <p class="subtitle">Select a client profile to analyze blended risk vectors.</p>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                 <div class="workspace-actions">
                     <button class="btn" id="btn-architecture"
                         style="border: 1px solid var(--border-glass); background: transparent; color: var(--text-secondary);">
-                        <i data-lucide="network"></i> Architecture
+                        <i data-lucide="network"></i> System Architecture
                     </button>
                     <div class="select-wrapper glass-input">
                         <i data-lucide="users" class="input-icon"></i>
@@ -62,7 +62,7 @@
                 <!-- Data Source Analytics -->
                 <section class="grid-card glass" id="bq-section">
                     <div class="card-header">
-                        <h2><i data-lucide="database" class="neon-cyan"></i> Client Profile (structured data from BQ)</h2>
+                        <h2><i data-lucide="database" class="neon-cyan"></i> Client Profile (structured data from BigQuery)</h2>
                         <div class="tab-controls">
                             <button id="bq-tab-btn-data" class="tab-btn active">Client Profile</button>
                             <button id="bq-tab-btn-sql" class="tab-btn">SQL Query</button>
@@ -138,7 +138,7 @@
             <div class="modal-body">
                 <pre class="mermaid">
                     flowchart TB
-                        UI["💻 Web Dashboard<br/>(HTML/JS/CSS)"]
+                        UI["💻 Workbench UI<br />(HTML/JS/CSS)"]
                         
                         subgraph "FastAPI Server"
                             API["⚡ API Endpoints"]
@@ -157,7 +157,7 @@
                         end
                     
                         UI -->|1. Select Client and Generate| API
-                        API -->|2. Invokes via Session| Runner
+                        API -->|2. Invoke via Session| Runner
                         Runner -->|3. Asynchronous Prompt| Agent
                         Agent -->|4. Reason about goal| Gemini
                         Agent -->|5. Request client profile| Tools

@@ -102,40 +102,43 @@ def get_loss_run_report(client_id: str) -> dict:
     search_client = discoveryengine.SearchServiceClient()
     serving_config = f"projects/{project_id}/locations/{location}/collections/default_collection/dataStores/{ds_id}/servingConfigs/default_search"
     
-    query = f"What are the significant claims, loss runs, and ergonomic or safety issues for {client_id}?"
-    request = discoveryengine.SearchRequest(
-        serving_config=serving_config,
-        query=query,
-        page_size=3,
-        content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-            snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(return_snippet=True)
-        )
-    )
+    ensemble_queries = [
+        f"Provide a detailed summary of all financial loss runs and structured claims history for {client_id}.",
+        f"What are the specific safety violations, ergonomic incidents, or warehouse accidents for {client_id}?",
+        f"List all exact dollar payout amounts, claim costs, reserves, and cargo damages for {client_id}."
+    ]
+    
+    all_snippets = []
     
     try:
-        response = search_client.search(request)
-        snippets = []
-        for result in response.results:
-            if result.document.id != client_id:
-                continue
-                
-            if result.document.derived_struct_data:
-                # Prioritize high-quality extractive segments if available
-                extractive_segments = result.document.derived_struct_data.get("extractive_segments", [])
-                for segment in extractive_segments:
-                    snippets.append(segment.get("content", ""))
-                # Fallback to standard contextual snippets
-                snippets_list = result.document.derived_struct_data.get("snippets", [])
-                for snip in snippets_list:
-                    snippets.append(snip.get("snippet", ""))
+        for query in ensemble_queries:
+            request = discoveryengine.SearchRequest(
+                serving_config=serving_config,
+                query=query,
+                page_size=3,
+                content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                    snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
+                        return_snippet=True,
+                        max_snippet_count=3
+                    )
+                )
+            )
+            response = search_client.search(request)
+            for result in response.results:
+                if result.document.id != client_id:
+                    continue
+                if result.document.derived_struct_data:
+                    for snip in result.document.derived_struct_data.get("snippets", []):
+                        all_snippets.append(snip.get("snippet", ""))
 
-        if not snippets:
+        if not all_snippets:
             print(f"\\n⚠️ [RAG DEBUG] No snippets retrieved for client '{client_id}'. Index may be compiling.")
-            return {"error": f"No relevant claims history found for client '{client_id}'.", "query": query}
+            return {"error": f"No relevant claims history found for client '{client_id}'.", "query": "Ensemble queries executed"}
             
-        combined_snippets = " \\n...\\n ".join(snippets)
-        print(f"\\n🔍 [RAG DEBUG] Sending the following snippets to Gemini for {client_id}:\\n{combined_snippets}\\n=========================================\\n")
-        return {"loss_runs": {"query": query, "extracted_claims_context": combined_snippets}}
+        unique_snippets = list(set(all_snippets))
+        combined_snippets = " \\n...\\n ".join(unique_snippets)
+        print(f"\\n🔍 [RAG DEBUG] Sending the following Ensemble snippets to Gemini for {client_id}:\\n{combined_snippets}\\n=========================================\\n")
+        return {"loss_runs": {"query": f"Ensemble Search (3 deep analytical filters applied for {client_id})", "extracted_claims_context": combined_snippets}}
         
     except Exception as e:
         return {"error": f"Vertex AI Search execution failed: {str(e)}"}

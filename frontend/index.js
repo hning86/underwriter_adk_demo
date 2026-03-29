@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = ragPayload.loss_runs;
         const queryText = data.query || "No query recorded";
         const snippetsHtml = data.extracted_claims_context 
-            ? data.extracted_claims_context.split('\\n...\\n').map(snip => `<div class="rag-snippet-block">${snip}</div>`).join('')
+            ? data.extracted_claims_context.split(/\s*\\n\.\.\.\\n\s*|\s*\n\.\.\.\n\s*/).map(snip => `<div class="rag-snippet-block">${snip}</div>`).join('')
             : '<div class="placeholder-text">No snippets were retrieved by the engine.</div>';
             
         ragOutput.innerHTML = `

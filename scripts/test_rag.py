@@ -10,15 +10,18 @@ def query_datastore(client_name: str):
     search_client = discoveryengine.SearchServiceClient()
     serving_config = f"projects/{project_id}/locations/{location}/collections/default_collection/dataStores/{ds_id}/servingConfigs/default_search"
     
-    query = f"What are the significant claims, loss runs, and ergonomic or safety issues for {client_name}?"
+    query = "Highest Paid claim cost dollar incident report cargo for acme"
     print(f"\nExecuting Query: '{query}'")
     
     request = discoveryengine.SearchRequest(
         serving_config=serving_config,
         query=query,
-        page_size=3,
+        page_size=10,
         content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-            snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(return_snippet=True)
+            snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
+                return_snippet=True,
+                max_snippet_count=5
+            )
         )
     )
     
