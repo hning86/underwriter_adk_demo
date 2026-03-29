@@ -57,6 +57,12 @@ flowchart TB
   - Single-Page Application using Vanilla HTML5, CSS3, and JavaScript.
   - Professional corporate light-mode theme (Safety Insurance branding) featuring interactive diagnostic data panes and native Mermaid architecture overlays.
 
+## Advanced Features
+
+- **Real-Time SSE Streaming:** The generation pipeline implements Server-Sent Events (SSE) over the FastAPI bridge to map Google ADK lifecycle states natively. This evaluates byte-chunks dynamically, rendering a ChatGPT-like "Typewriter" cadence across the UI rather than invoking massive blocking network callbacks, entirely eradicating perceived user latency.
+- **Enterprise Vertex AI (Extractive Segments):** The backend actively overrides standard keyword extractions prioritizing Google Cloud's Enterprise tier to utilize the `ExtractiveContentSpec`. Instead of restricted keyword excerpts truncated with jarring `...` artifacts, the RAG tool natively extracts massive, pure document paragraphs spanning the semantic boundary. 
+> **Important:** To utilize Extractive Segments, ensure your Search App has "Enterprise Edition" securely enabled within the GCP Agent Builder console.
+
 ## Prerequisites
 
 - Python >= 3.13
