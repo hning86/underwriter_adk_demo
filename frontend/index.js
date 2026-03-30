@@ -182,6 +182,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderPreviews(data) {
+        // Clear previous outputs across panes seamlessly
+        document.getElementById('rag-output').innerHTML = `<div class="placeholder-text">Generate a summary to view native RAG extractions.</div>`;
+        synthesisOutput.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="sparkles" class="empty-icon pulse"></i>
+                <h3>Ready for Synthesis</h3>
+                <p>Click <strong>Generate Risk Summary</strong> to synthesize structured BQ data and unstructured Loss Runs using Gemini context windows.</p>
+            </div>
+        `;
+        synthesisBadge.textContent = "Awaiting data...";
+        synthesisBadge.className = "badge badge-purple";
+        lucide.createIcons();
+        
         const bqEntries = Object.entries(data.bq_data);
         
         // Render BQ Mock data
