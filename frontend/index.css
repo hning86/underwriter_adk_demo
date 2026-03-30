@@ -142,7 +142,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 2rem;
 }
 
@@ -153,6 +153,7 @@ body {
     padding: 1.5rem 2rem;
     border-radius: 16px;
     margin-bottom: 2rem;
+    flex-shrink: 0;
 }
 
 .page-title h1 {
@@ -240,23 +241,27 @@ body {
         "bq ai"
         "unstructured ai";
     grid-template-columns: 1.1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 1.5rem;
+    flex: 1;
+    min-height: 0;
 }
 
 #bq-section {
     grid-area: bq;
-    min-height: auto;
+    min-height: 0;
 }
 
 #unstructured-section {
     grid-area: unstructured;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 #synthesis-section {
     grid-area: ai;
-    min-height: 400px;
+    min-height: 0;
 }
 
 .grid-card {
@@ -266,6 +271,7 @@ body {
     flex-direction: column;
     border-top: 3px solid var(--brand-navy);
     transition: var(--transition-smooth);
+    overflow: hidden;
 }
 
 .grid-card:hover {
@@ -277,6 +283,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    flex-shrink: 0;
 }
 
 .card-header h2 {
@@ -305,6 +312,8 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 /* Data Displays */
