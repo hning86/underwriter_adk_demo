@@ -4,6 +4,8 @@ This AI-Assisted Underwriting demo integrates **Gemini** and the **Google Agent 
 
 By selecting a client profile in the web dashboard and clicking "Generate Risk Summary", underwriters receive an instant, agent-driven analysis that identifies high-risk patterns, correlates risk factors, and provides automated mitigation recommendations directly.
 
+![Underwriting Workbench UI](static/screenshot.png)
+
 ## Business Value
 
 - **Operational Velocity:** Accelerates the quote-to-bind lifecycle by replacing manual document review with automated LLM summarization.
