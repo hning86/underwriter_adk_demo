@@ -16,27 +16,27 @@ Below is the architecture diagram illustrating how the web dashboard, FastAPI se
 
 ```mermaid
 flowchart TB
-    UI["💻 Workbench UI<br/>(HTML/JS/CSS)"]
+    UI["💻 Workbench UI (HTML/JS/CSS)"]
     
-    subgraph "FastAPI Server"
+    subgraph FastAPI ["FastAPI Server"]
         API["⚡ API Endpoints"]
-        Runner["🚦 ADK Runner"]
+        Proxy["🔌 Vertex AI Client"]
     end
     
-    subgraph "Google ADK Orchestration"
+    subgraph AgentEngine ["Vertex AI Agent Engine"]
         Agent["🤖 Underwriter Agent"]
         Tools["🛠️ Tools (Profile Fetcher)"]
         Gemini["🧠 Gemini 2.5 Flash"]
     end
     
-    subgraph "Data Storage"
-        BQ[("📊 Structured Data<br/>(Google BigQuery)")]
-        VS[("📄 RAG Document Index<br/>(Vertex AI Search)")]
+    subgraph Storage ["Data Storage"]
+        BQ[("📊 Structured Data (Google BigQuery)")]
+        VS[("📄 RAG Document Index (Vertex AI Search)")]
     end
 
     UI -->|1. Select Client and Generate| API
-    API -->|2. Invoke via Session| Runner
-    Runner -->|3. Asynchronous Prompt| Agent
+    API -->|2. Invoke Stream| Proxy
+    Proxy -->|3. Over Network| Agent
     Agent -->|4. Reason about goal| Gemini
     Agent -->|5. Request client profile| Tools
     Tools -.-> BQ
@@ -44,14 +44,15 @@ flowchart TB
     Tools -->|6. Return JSON context| Agent
     Agent -->|7. Feed context for synthesis| Gemini
     Gemini -->|8. Risk Assessment Markdown| Agent
-    Agent -->|9. Stream output| Runner
-    Runner -->|10. HTTP JSON Response| API
+    Agent -->|9. Stream output| Proxy
+    Proxy -->|10. HTTP JSON Response| API
     API -->|11. Render Dashboard| UI
 ```
 
 - **Backend / Orchestration:**
-  - **FastAPI:** High-performance Python server managing endpoints.
-  - **Google ADK (Agent Development Kit):** Orchestrates Gemini interactions, tool-calling (to query live BigQuery resources and Vertex AI Search unstructured document indices), and asynchronous context streaming via the `Runner`.
+  - **FastAPI:** High-performance Python server serving the frontend and acting as a stateless proxy.
+  - **Google ADK (Agent Development Kit):** Used to author and deploy the `underwriter_agent` as a standalone unit to **Vertex AI Agent Engine**.
+  - **Vertex AI Client:** The FastAPI backend securely invokes the deployed reasoning engine via the `google.genai` SDK.
   - **Gemini 2.5 Flash:** Core LLM configured within the ADK for high-accuracy synthesis.
 - **Frontend / UI:**
   - Single-Page Application using Vanilla HTML5, CSS3, and JavaScript.
@@ -105,9 +106,17 @@ The project is structured into `frontend/` and `backend/` directories, but runs 
    Open your browser and navigate to:
    [http://localhost:8000/](http://localhost:8000/)
 
-## Deploying to Google Cloud Run
+## Deploying the Agent to Vertex AI Agent Engine
 
-To containerize and launch the Underwriter Workbench globally, simply execute the automated deployment script:
+The core intelligence logic is decoupled and deployed directly into Vertex AI Agent Engine using the standalone deployment script:
+```bash
+./deploy_agent.sh
+```
+Once deployed, export the generated `AGENT_ID` resource name in your terminal so your backend routes traffic securely to the managed instance instead of defaulting locally.
+
+## Deploying Backend to Google Cloud Run
+
+To containerize and launch the FastAPI Underwriter Workbench backend globally, execute the automated deployment script:
 ```bash
 ./deploy.sh
 ```
@@ -126,11 +135,11 @@ You can now securely access the production app via `http://localhost:8080`.
 ```text
 UnderwriterDemo/
 ├── pyproject.toml              # Project dependencies and configurations
+├── underwriter_agent/          # Core Google ADK agent orchestration logic (Standalone Package)
+│   ├── agent.py                # Agent instructions and tooling definitions
+│   └── tools.py                # External Google Cloud data retrieval tools
 ├── backend/
-│   ├── main.py                 # FastAPI backend routing and ADK runner integration
-│   └── underwriter_agent/
-│       ├── agent.py            # Core Google ADK agent orchestration logic
-│       └── tools.py            # External Google Cloud data retrieval tools
+│   └── main.py                 # FastAPI backend routing and Vertex AI reasoning engine integration
 ├── scripts/                    # Initialization and diagnostic tools
 │   ├── setup_bq.py             # Provisions structured client profile datasets in BigQuery
 │   ├── setup_rag.py            # Uploads PDFs with exact metadata to Vertex AI Search

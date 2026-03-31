@@ -9,7 +9,11 @@ from google.adk.apps import App
 from google.adk.models.google_llm import Gemini
 from google.genai import types, Client
 
-from backend.underwriter_agent.tools import get_client_profile_by_id, get_loss_run_report
+import sys
+import os
+# Force the current directory into sys.path to ensure cloud environments can resolve peer modules
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from tools import get_client_profile_by_id, get_loss_run_report
 
 # Custom Gemini subclass to enable Vertex AI
 class VertexGemini(Gemini):

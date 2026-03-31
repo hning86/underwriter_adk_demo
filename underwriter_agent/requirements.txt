@@ -1,0 +1,5 @@
+google-adk>=1.28.0
+google-cloud-bigquery>=3.40.1
+google-cloud-discoveryengine>=0.11.0
+google-genai>=1.68.0
+python-dotenv>=1.2.2

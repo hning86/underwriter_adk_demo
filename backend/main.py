@@ -8,11 +8,9 @@ from google.genai import types
 
 from google.cloud import bigquery
 
-# ADK Imports
-from google.adk.runners import Runner
-from google.adk.sessions.in_memory_session_service import InMemorySessionService
-from backend.underwriter_agent.agent import app as agent_app
-from backend.underwriter_agent.tools import get_client_profile_by_id
+# ADK / GenAI Imports
+from google.genai import Client
+from underwriter_agent.tools import get_client_profile_by_id
 
 app = FastAPI()
 
@@ -50,37 +48,62 @@ async def generate_summary(request: GenerateRequest):
         
     async def event_generator():
         try:
-            runner = Runner(
-                app=agent_app,
-                session_service=InMemorySessionService(),
-                auto_create_session=True
-            )
+            # Use configured AGENT_ID from environment explicitly
+            agent_id = os.environ.get("AGENT_ID", "projects/840328373082/locations/us-central1/reasoningEngines/4546472334516551680")
             
             prompt = f"Provide a risk assessment summary for client profile: {client_id}"
             
-            async for event in runner.run_async(
-                user_id="ui_user",
-                session_id=f"session_{client_id}",
-                new_message=types.Content(role="user", parts=[types.Part(text=prompt)])
-            ):
-                if event.content and event.content.parts:
-                    for part in event.content.parts:
-                        if getattr(part, "function_call", None) and part.function_call.name == "get_loss_run_report":
-                            client_id_arg = part.function_call.args.get('client_id', client_id)
-                            queries = [
-                                f"Provide a detailed summary of all financial loss runs and structured claims history for {client_id_arg}.",
-                                f"What are the specific safety violations, ergonomic incidents, or warehouse accidents for {client_id_arg}?",
-                                f"List all exact dollar payout amounts, claim costs, reserves, and cargo damages for {client_id_arg}."
-                            ]
-                            yield f"data: {json.dumps({'state': 'rag_search_started', 'queries': queries})}\n\n"
+            import google.auth
+            from google.auth.transport.requests import Request
+            import httpx
+            import json
+            
+            credentials, _ = google.auth.default()
+            credentials.refresh(Request())
+            
+            url = f"https://us-central1-aiplatform.googleapis.com/v1beta1/{agent_id}:streamQuery"
+            headers = {
+                "Authorization": f"Bearer {credentials.token}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "input": {
+                    "user_id": f"session_{client_id}",
+                    "message": prompt
+                }
+            }
+            
+            async with httpx.AsyncClient(timeout=300.0) as http_client:
+                async with http_client.stream("POST", url, headers=headers, json=payload) as response:
+                    async for line in response.aiter_lines():
+                        if not line:
+                            continue
+                        try:
+                            chunk_data = json.loads(line)
+                            parts = chunk_data.get("content", {}).get("parts", [])
                             
-                        # Intercept Tool Returns
-                        if getattr(part, "function_response", None) and part.function_response.name == "get_loss_run_report":
-                            rag_payload = part.function_response.response
-                            yield f"data: {json.dumps({'state': 'rag_search_complete', 'rag_payload': rag_payload})}\n\n"
-                            
-                        if part.text:
-                            yield f"data: {json.dumps({'state': 'generating', 'chunk': part.text})}\n\n"
+                            for part in parts:
+                                match part:
+                                    # 1. Intercept Tool Executions (Start of RAG process)
+                                    case {"function_call": {"name": name, "args": args}} if name in ["get_loss_run_report", "get_client_profile_by_id", "profile_fetcher"]:
+                                        client_id_arg = args.get("client_id", client_id)
+                                        queries = [
+                                            f"Function Called: {name}",
+                                            f"Target profile arguments: {json.dumps(args)}",
+                                            f"Awaiting Vertex AI remote big data infrastructure..."
+                                        ]
+                                        yield f"data: {json.dumps({'state': 'rag_search_started', 'queries': queries})}\n\n"
+                                        
+                                    # 2. Intercept Tool Results (The literal RAG Engine big data query result)
+                                    case {"function_response": {"name": "get_loss_run_report", "response": response}}:
+                                        yield f"data: {json.dumps({'state': 'rag_search_complete', 'rag_payload': response})}\n\n"
+                                        
+                                    # 3. Intercept Gemini Generation Output
+                                    case {"text": text} if text:
+                                        yield f"data: {json.dumps({'state': 'generating', 'chunk': text})}\n\n"
+                                    
+                        except json.JSONDecodeError:
+                            continue
                             
             yield f"data: {json.dumps({'state': 'done'})}\n\n"
             
