@@ -11,6 +11,7 @@ dependencies = [
     "google-genai>=1.68.0",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",
+    "reportlab>=4.4.10",
     "uvicorn>=0.42.0",
 ]
 
