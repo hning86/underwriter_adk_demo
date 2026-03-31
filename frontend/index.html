@@ -140,25 +140,25 @@
                     flowchart TB
                         UI["💻 Workbench UI<br />(HTML/JS/CSS)"]
                         
-                        subgraph "FastAPI Server"
+                        subgraph FastAPI ["FastAPI Server"]
                             API["⚡ API Endpoints"]
-                            Runner["🚦 ADK Runner"]
+                            Proxy["🔌 Vertex AI Client"]
                         end
                         
-                        subgraph "Google ADK Orchestration"
+                        subgraph AgentEngine ["Vertex AI Agent Engine"]
                             Agent["🤖 Underwriter Agent"]
                             Tools["🛠️ Tools (Profile Fetcher)"]
                             Gemini["🧠 Gemini 2.5 Flash"]
                         end
                         
-                        subgraph "Data Storage"
+                        subgraph Storage ["Data Storage"]
                             BQ[("📊 Structured Data<br/>(Google BigQuery)")]
                             VS[("📄 RAG Document Index<br/>(Vertex AI Search)")]
                         end
                     
                         UI -->|1. Select Client and Generate| API
-                        API -->|2. Invoke via Session| Runner
-                        Runner -->|3. Asynchronous Prompt| Agent
+                        API -->|2. Invoke Stream| Proxy
+                        Proxy -->|3. Over Network| Agent
                         Agent -->|4. Reason about goal| Gemini
                         Agent -->|5. Request client profile| Tools
                         Tools -.-> BQ
@@ -166,10 +166,9 @@
                         Tools -->|6. Return JSON context| Agent
                         Agent -->|7. Feed context for synthesis| Gemini
                         Gemini -->|8. Risk Assessment Markdown| Agent
-                        Agent -->|9. Stream output| Runner
-                        Runner -->|10. HTTP JSON Response| API
-                        API -->|11. Render Dashboard| UI
-                                    </pre>
+                        Agent -->|9. Stream output| Proxy
+                        Proxy -->|10. HTTP JSON Response| API
+                        API -->|11. Render Dashboard| UI</pre>
             </div>
         </div>
     </div>
