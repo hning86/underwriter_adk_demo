@@ -147,7 +147,8 @@
                         
                         subgraph AgentEngine ["Vertex AI Agent Engine"]
                             Agent["🤖 Underwriter Agent"]
-                            Tools["🛠️ Tools (Profile Fetcher)"]
+                            ToolBQ["🛠️ Profile Fetcher (Structured)"]
+                            ToolVS["🛠️ Loss Run RAG (Unstructured)"]
                             Gemini["🧠 Gemini 2.5 Flash"]
                         end
                         
@@ -160,10 +161,12 @@
                         API -->|2. Invoke Stream| Proxy
                         Proxy -->|3. Over Network| Agent
                         Agent -->|4. Reason about goal| Gemini
-                        Agent -->|5. Request client profile| Tools
-                        Tools -.-> BQ
-                        Tools -.-> VS
-                        Tools -->|6. Return JSON context| Agent
+                        Agent -->|5. Request client profile| ToolBQ
+                        Agent -->|5. Query unstructured reports| ToolVS
+                        ToolBQ -.-> BQ
+                        ToolVS -.-> VS
+                        ToolBQ -->|6. Return JSON profile| Agent
+                        ToolVS -->|6. Return context snippets| Agent
                         Agent -->|7. Feed context for synthesis| Gemini
                         Gemini -->|8. Risk Assessment Markdown| Agent
                         Agent -->|9. Stream output| Proxy
