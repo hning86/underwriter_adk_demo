@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#0b3656" />
+      <stop offset="100%" stop-color="#051b2b" />
+    </radialGradient>
+
+    <!-- Shield Gradient -->
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00a0f0" />
+      <stop offset="100%" stop-color="#005580" />
+    </linearGradient>
+
+    <!-- Sparkle Gradient -->
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff9f43" />
+      <stop offset="100%" stop-color="#f26f21" />
+    </linearGradient>
+    
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+
+  <!-- Shield / Crest Outline (Glowing Accent) -->
+  <path d="M 256, 70 L 410, 110 L 410, 260 C 410, 370 256, 442 256, 442 C 256, 442 102, 370 102, 260 L 102, 110 Z" 
+        fill="none" 
+        stroke="url(#sparkGrad)" 
+        stroke-width="12" 
+        stroke-linejoin="round"
+        filter="url(#glow)"
+        opacity="0.8" />
+
+  <!-- Inner Shield (Solid & Premium Blue) -->
+  <path d="M 256, 90 L 386, 124 L 386, 260 C 386, 350 256, 410 256, 410 C 256, 410 126, 350 126, 260 L 126, 124 Z" 
+        fill="url(#shieldGrad)" 
+        stroke="#ffffff" 
+        stroke-width="6" 
+        stroke-linejoin="round" />
+
+  <!-- Central Sparkle Symbol (representing Smart AI synthesis / Safety) -->
+  <path d="M 256, 160 Q 256, 250 346, 250 Q 256, 250 256, 340 Q 256, 250 166, 250 Q 256, 250 256, 160 Z" 
+        fill="url(#sparkGrad)" />
+        
+  <!-- Dynamic Accent Dots -->
+  <circle cx="256" cy="250" r="12" fill="#ffffff" />
+</svg>
